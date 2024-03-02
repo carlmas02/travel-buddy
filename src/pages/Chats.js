@@ -1,28 +1,33 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   onSnapshot,
   arrayUnion,
   doc,
   serverTimestamp,
+  getDoc,
   Timestamp,
   updateDoc,
+  setDoc,
 } from "firebase/firestore";
 import { realtimeDB, db } from "../firebaseConfig";
-import { ref, remove } from "firebase/database";
+import { ref, remove, get } from "firebase/database";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { v4 as uuid } from "uuid";
 import { useParams } from "react-router-dom";
 
-const ChatLayout = ({ messages }) => {
+const ChatLayout = ({ messages, chatId, receiverId }) => {
   const [text, setText] = useState("");
   const { currentUser } = useContext(AuthContext);
 
-  const { chatId } = useParams();
+  const motionRef = useRef();
+
+  useEffect(() => {
+    motionRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const sendMessage = async (e, typeOfMessage) => {
     e.preventDefault();
-    console.log(currentUser);
     if (typeOfMessage === "TRAVEL_REQUEST") {
       await updateDoc(doc(db, "chats", chatId), {
         messages: arrayUnion({
@@ -36,6 +41,19 @@ const ChatLayout = ({ messages }) => {
         }),
       });
     } else {
+      const senderDocumentRef = doc(db, "notifications", receiverId);
+      await updateDoc(senderDocumentRef, {
+        notifications: arrayUnion({
+          notificationId: uuid(),
+          senderId: currentUser.uid,
+          senderName: currentUser.displayName,
+          senderProfilePhoto: currentUser.photoURL,
+          receiverId: receiverId,
+          date: Timestamp.now(),
+          status: "chat-sent",
+        }),
+      });
+      //  sending chats
       await updateDoc(doc(db, "chats", chatId), {
         messages: arrayUnion({
           id: uuid(),
@@ -91,12 +109,28 @@ const ChatLayout = ({ messages }) => {
     alert("request accepted");
   };
 
+  const ignoreRequest = async () => {
+    const newMessages = [];
+    for (const message of messages) {
+      if (message.travelRequest === false) {
+        // console.log("Message found:", message);
+        newMessages.push(message);
+      }
+    }
+
+    await updateDoc(doc(db, "chats", chatId), {
+      messages: newMessages,
+    });
+    console.log(newMessages);
+  };
+
   return (
     <div className="chat-container">
       <div className="chat-messages">
         {messages ? (
           messages.map((message, index) => {
             if (message.travelRequest) {
+              console.log(message, chatId);
               return (
                 <div
                   key={index}
@@ -112,13 +146,19 @@ const ChatLayout = ({ messages }) => {
                         <b>
                           {message.senderName} has sent you a travel request !
                           <button
+                            className="btn ml-4 btn-success"
                             onClick={() =>
                               travelWithCompanion(message, message.senderId)
                             }
                           >
                             Accept{" "}
                           </button>
-                          <button>Ignore </button>
+                          <button
+                            onClick={ignoreRequest}
+                            className="btn ml-4 btn-error"
+                          >
+                            Ignore{" "}
+                          </button>
                         </b>
                       )}
                     </span>
@@ -128,21 +168,26 @@ const ChatLayout = ({ messages }) => {
             } else {
               return (
                 <div
-                  key={index}
-                  className={`message ${
-                    message.senderId === currentUser.uid ? "user" : "other"
-                  }`}
+                  className={`chat ${
+                    message.senderId === currentUser.uid
+                      ? "chat-end "
+                      : "chat-start"
+                  }  `}
                 >
-                  <p>
-                    <span>
-                      {message.senderId === currentUser.uid ? (
-                        <b>You :</b>
-                      ) : (
-                        <b>{message.senderName} :</b>
-                      )}
-                    </span>{" "}
-                    {message.text}
-                  </p>
+                  <div className="chat-image avatar">
+                    <div className="w-10 rounded-full">
+                      <img alt="" src={message.senderProfilePhoto} />
+                    </div>
+                  </div>
+                  {message.senderId === currentUser.uid ? (
+                    <div class="chat-header">
+                      You
+                      <time class="text-xs opacity-50"></time>
+                    </div>
+                  ) : (
+                    <div class="chat-header">{message.senderName}</div>
+                  )}
+                  <div className="chat-bubble">{message.text}</div>
                 </div>
               );
             }
@@ -150,43 +195,37 @@ const ChatLayout = ({ messages }) => {
         ) : (
           <p>Loading...</p>
         )}
+
+        <div ref={motionRef}></div>
       </div>
       <div className="chat-input">
         <form>
           <input
             type="text"
-            placeholder="Type your message..."
+            placeholder="Type here"
+            className="input input-bordered max-w-xs"
             onChange={(e) => setText(e.target.value)}
-            required
           />
-          <button onClick={(e) => sendMessage(e, "")}>Send</button>
+          <button
+            onClick={(e) => sendMessage(e, "")}
+            className="btn btn-secondary"
+          >
+            Send Message
+          </button>
         </form>
+        <button
+          onClick={(e) => sendMessage(e, "TRAVEL_REQUEST")}
+          class="ml-2 btn btn-outline btn-primary"
+        >
+          Confirm Travel
+        </button>
       </div>
-      <button onClick={(e) => sendMessage(e, "TRAVEL_REQUEST")}>
-        Confirm travel
-      </button>
     </div>
   );
 };
 
-const Chats = () => {
+const Chats = ({ chatId, name, receiverId }) => {
   const [messages, setMessages] = useState();
-
-  const { chatId } = useParams();
-
-  const test = () => {
-    const databaseRef = ref(
-      realtimeDB,
-      "current-travelers/O5gmpcnk61SAk4jLZsShgMiNXsj2"
-    );
-    remove(databaseRef)
-      .then(() => {
-        console.log("All entries deleted successfully.");
-      })
-      .catch((error) => {
-        console.error("Error deleting entries:", error);
-      });
-  };
 
   useEffect(() => {
     // const user
@@ -197,15 +236,15 @@ const Chats = () => {
     return () => {
       unSub();
     };
-  }, []);
+  }, [chatId]);
 
   return (
     <div>
-      <div>List of chats</div>
+      <div className=" h-[3.8rem] bg-gray-400 flex items-center pl-8 text-xl font-bold">
+        Chatting with {name}
+      </div>
 
-      <ChatLayout messages={messages} />
-
-      <button onClick={test}>test</button>
+      <ChatLayout messages={messages} chatId={chatId} receiverId={receiverId} />
     </div>
   );
 };

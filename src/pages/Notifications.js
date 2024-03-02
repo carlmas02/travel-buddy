@@ -95,80 +95,197 @@ const Notifications = () => {
     fetchData();
   }, [currentUser.uid]);
   return (
-    <div>
-      {notifications.map((notification) => {
-        if (notification.status == "accepted-companion") {
-          return (
-            <div
-              style={{ background: "green" }}
-              key={notification.notificationId}
-            >
-              <div> {notification.senderId} </div>
-              <div>
-                <h1>{notification.senderName} accepted ur request</h1>
-                <img
-                  className="profilePic"
-                  src={notification.senderProfilePhoto}
-                />
-              </div>
+    <div className="overflow-x-auto">
+      {notifications.length ? (
+        <table className="table">
+          {/* head */}
+          <thead>
+            <tr>
+              <th>
+                <label>
+                  <input type="checkbox" className="checkbox" />
+                </label>
+              </th>
+              <th>Name</th>
+              <th>Description</th>
+            </tr>
+          </thead>
 
-              <button onClick={() => clearNotification(notification)}>
-                clear notification
-              </button>
-            </div>
-          );
-        } else if (notification.status == "accepted-travel") {
-          return (
-            <div
-              style={{ background: "green" }}
-              key={notification.notificationId}
-            >
-              <div> {notification.senderId} </div>
-              <div>
-                <h1>You are travelling with {notification.senderName}</h1>
-                <h2>Feel free to rate {notification.senderName}</h2>
+          <tbody>
+            {notifications.map((notification) => {
+              if (notification.status == "accepted-companion") {
+                return (
+                  <tr>
+                    <th>
+                      <label>
+                        <input type="checkbox" className="checkbox" />
+                      </label>
+                    </th>
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div className="avatar">
+                          <div className="mask mask-squircle w-12 h-12">
+                            <img src={notification.senderProfilePhoto} />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="font-bold">
+                            {notification.senderName}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
 
-                <Link to={`/account/${notification.senderId}`}> Rate</Link>
+                    <td>{notification.senderName} accepted ur request</td>
+                    <th>
+                      <button
+                        onClick={() => clearNotification(notification)}
+                        className="btn btn-ghost btn-xs"
+                      >
+                        Clear
+                      </button>
+                    </th>
+                  </tr>
+                );
+              } else if (notification.status == "accepted-travel") {
+                return (
+                  <tr>
+                    <th>
+                      <label>
+                        <input type="checkbox" className="checkbox" />
+                      </label>
+                    </th>
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div className="avatar">
+                          <div className="mask mask-squircle w-12 h-12">
+                            <img src={notification.senderProfilePhoto} />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="font-bold">
+                            {notification.senderName}{" "}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
 
-                <img
-                  className="profilePic"
-                  src={notification.senderProfilePhoto}
-                />
-              </div>
+                    <td>You are travelling with {notification.senderName}</td>
 
-              <button onClick={() => clearNotification(notification)}>
-                clear notification
-              </button>
-            </div>
-          );
-        } else {
-          return (
-            <div
-              style={{ background: "green" }}
-              key={notification.notificationId}
-            >
-              <div> {notification.senderId} </div>
-              <div>
-                <h1>{notification.senderName}</h1>
-                <img
-                  className="profilePic"
-                  src={notification.senderProfilePhoto}
-                />
-              </div>
-              <button
-                onClick={() =>
-                  acceptRequest(notification.senderId, notification)
-                }
-              >
-                Accept request
-              </button>
-              <button onClick={() => clearNotification(notification)}>
-                del
-              </button>
-            </div>
-          );
-        }
-      })}
+                    <th>
+                      <Link to={`/account/${notification.senderId}`}>
+                        <button
+                          onClick={() => clearNotification(notification)}
+                          className="btn btn-ghost btn-xs"
+                        >
+                          Rate {notification.senderName}
+                        </button>
+                      </Link>
+                      <button
+                        onClick={() => clearNotification(notification)}
+                        className="btn btn-ghost btn-xs"
+                      >
+                        Clear
+                      </button>
+                    </th>
+                  </tr>
+                );
+              } else if (notification.status == "chat-sent") {
+                return (
+                  <tr>
+                    <th>
+                      <label>
+                        <input type="checkbox" className="checkbox" />
+                      </label>
+                    </th>
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div className="avatar">
+                          <div className="mask mask-squircle w-12 h-12">
+                            <img src={notification.senderProfilePhoto} />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="font-bold">
+                            {notification.senderName}{" "}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td>{notification.senderName} sent you a message </td>
+
+                    <th>
+                      <Link to={`/chat`}>
+                        <button
+                          onClick={() => clearNotification(notification)}
+                          className="btn btn-ghost btn-xs"
+                        >
+                          Chat
+                        </button>
+                      </Link>
+                      <button
+                        onClick={() => clearNotification(notification)}
+                        className="btn btn-ghost btn-xs"
+                      >
+                        Clear
+                      </button>
+                    </th>
+                  </tr>
+                );
+              } else {
+                return (
+                  <tr>
+                    <th>
+                      <label>
+                        <input type="checkbox" className="checkbox" />
+                      </label>
+                    </th>
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div className="avatar">
+                          <div className="mask mask-squircle w-12 h-12">
+                            <img src={notification.senderProfilePhoto} />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="font-bold">
+                            {notification.senderName}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td>
+                      {notification.senderName} sent you a companion request
+                    </td>
+                    <th>
+                      <button
+                        onClick={() =>
+                          acceptRequest(notification.senderId, notification)
+                        }
+                        className="btn btn-ghost btn-xs hover:bg-green"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        onClick={() => clearNotification(notification)}
+                        className="btn btn-ghost btn-xs"
+                      >
+                        Reject
+                      </button>
+                    </th>
+                  </tr>
+                );
+              }
+            })}
+          </tbody>
+        </table>
+      ) : (
+        <div className=" container text-center p-6">
+          <h1>No New Notifications</h1>
+        </div>
+      )}
     </div>
   );
 };

@@ -13,10 +13,9 @@ export const AuthContextProvider = ({ children }) => {
       setCurrentUser(user);
       if (currentUser) {
         setIsLoggedIn(true);
-        console.log("here auth bro");
       }
     });
-    console.log(isLoggedIn, currentUser);
+    // console.log(isLoggedIn, currentUser.uid);
 
     return () => {
       unsub();
